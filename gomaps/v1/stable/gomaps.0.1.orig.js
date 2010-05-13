@@ -63,33 +63,29 @@
 					markerOptions = { icon:blueIcon, draggable:true };
 					marker = new GMarker(latlng, markerOptions);
 					
-					//alert(form_html);
-					
-					var html = "<div class='form'><input type='hidden' id='location' value='" + mapLocation + "' />" +
-					 "<label for='name'>Name:</label><input type='text' id='name' value='New Marker' />" +
-					 "<label for='type'>Content type:</label><select id='type'>" +
-					 "<option value='1' selected>Text</option>" +
-					 "<option value='2'>YouTube URL</option>" +
-					 // "<option value='3'>Vimeo URL</option>" + 
-					 "</select>" +
-					 "<label for='markcontent'>Content:</label><input id='markcontent' value='Content here' />" +
-					 "<label for='colour'>Colour:</label><select id='colour'>" +
-					 "<option value='red' selected>Red</option>" +
-					 "<option value='orange'>Orange</option>" +
-					 "<option value='green'>Green</option>" +
-					 "<option value='yellow'>Yellow</option>" +
-					 "<option value='blue'>Blue</option>" +
-					 "</select>" + 
-					 // "<label for='loc'>Lat/Lng:</label><input type='text' id='loc' value='" + latlng.lat() + ", " + latlng.lng() + "' />" +
-					 "<input type='button' class='submit' value='Save & Close' onclick='saveData()'/>" + 
-					 "<input type='button' class='submit' value='Remove Marker' onclick='removeMarker()'/></div>";				 
-					
-					map.addOverlay(marker);
-					marker.openInfoWindow(html);
-					
-					GEvent.addListener(marker, "click", function() {
+					GEvent.addListener(marker, "click", function() {						
+						var html = "<div class='form'><input type='hidden' id='location' value='" + mapLocation + "' />" +
+						 "<label for='name'>Name:</label><input type='text' id='name' value='New Marker' />" +
+						 "<label for='type'>Content type:</label><select id='type'>" +
+						 "<option value='1' selected>Text</option>" +
+						 "<option value='2'>YouTube URL</option>" +
+						 // "<option value='3'>Vimeo URL</option>" + 
+						 "</select>" +
+						 "<label for='markcontent'>Content:</label><input id='markcontent' value='Content here' />" +
+						 "<label for='colour'>Colour:</label><select id='colour'>" +
+						 "<option value='red' selected>Red</option>" +
+						 "<option value='orange'>Orange</option>" +
+						 "<option value='green'>Green</option>" +
+						 "<option value='yellow'>Yellow</option>" +
+						 "<option value='blue'>Blue</option>" +
+						 "</select>" + 
+						 // "<label for='loc'>Lat/Lng:</label><input type='text' id='loc' value='" + latlng.lat() + ", " + latlng.lng() + "' />" +
+						 "<input type='button' class='submit' value='Save & Close' onclick='saveData()'/>" + 
+						 "<input type='button' class='submit' value='Remove Marker' onclick='removeMarker()'/></div>";
+						 
 						marker.openInfoWindow(html);
-					});
+					});	
+					map.addOverlay(marker);
 				}
 			});
 			
@@ -233,7 +229,7 @@
 				}
  
 				// put the assembled agents_html contents into the agents div
-				document.getElementById("agent").innerHTML = '<option value="0">ALL AGENTS</option>' + agents_html;
+				document.getElementById("agent").innerHTML = agents_html;
  
 				// === Plot the polylines ===
 
