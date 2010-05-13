@@ -1,6 +1,6 @@
 /*
 ----------------------------------------------
- GoMaps v.0.1
+ GoMaps v.0.2
  Developed by Ollie Bettany / Twist Internet
  Created: 12/05/10
 ----------------------------------------------
@@ -37,10 +37,10 @@
 			
 			if (customControls != true) {
 				map.addControl(new GLargeMapControl());
-				map.addControl(new GMapTypeControl());
 			} else {
 				map.addControl(new TextualZoomControl());
 			}
+			map.addControl(new GMapTypeControl());
 			
 			map.setCenter(new GLatLng(mapLat, mapLng), mapZoom);
 			
@@ -54,7 +54,7 @@
 				});
 			}
 			
-			var maptips = new MapTips(map); // MapTips aqui!
+			//var maptips = new MapTips(map); // MapTips aqui!
 
 			GEvent.addListener(map, "click", function(overlay, latlng) {
 				if (latlng) {
@@ -67,8 +67,13 @@
 					
 					var html = "<div class='form'><input type='hidden' id='location' value='" + mapLocation + "' />" +
 					 "<label for='name'>Name:</label><input type='text' id='name' value='New Marker' />" +
-					 "<label for='type'>Content type:</label><select id='type'>" +
-					 "<option value='1' selected>Text</option>" +
+					 "<label for='type'>Content type:</label><select id='type'>";
+					 
+					if (agentId == 0) {
+					 	html += "<option value='0' selected>THIS IS ME!</option>";
+					}
+					
+					html += "<option value='1'>Text</option>" +
 					 "<option value='2'>YouTube URL</option>" +
 					 // "<option value='3'>Vimeo URL</option>" + 
 					 "</select>" +
@@ -81,7 +86,7 @@
 					 "<option value='blue'>Blue</option>" +
 					 "</select>" + 
 					 // "<label for='loc'>Lat/Lng:</label><input type='text' id='loc' value='" + latlng.lat() + ", " + latlng.lng() + "' />" +
-					 "<input type='button' class='submit' value='Save & Close' onclick='saveData()'/>" + 
+					 "<input type='button' class='submit' value='Save & Close' onclick='saveData(1)'/>" + 
 					 "<input type='button' class='submit' value='Remove Marker' onclick='removeMarker()'/></div>";				 
 					
 					map.addOverlay(marker);
@@ -108,9 +113,14 @@
 			var i = 0;
  
 			// A function to create the marker and set up the event window
-			createMarker = function(point,name,html,colour) {
+			createMarker = function(id,point,name,html,colour) {
 				var customIcon = new GIcon(baseIcon);
-				customIcon.image = "../images/map-marker-" + colour + ".png";
+				
+				if (id != agentId) {
+					customIcon.image = "../images/map-marker-" + colour + ".png";
+				} else {
+					customIcon.image = "../images/map-marker-agent.png";
+				}
 				markerOptions = { icon:customIcon,title:name };
 			
 				var marker = new GMarker(point, markerOptions);
@@ -130,24 +140,24 @@
 				return marker;
 			}
 			
-			function createPolyline(points,colour,width,name,html) {
+			function createPolyline(id,points,colour,width,name,html) {
 				//alert(points + ", " + name + ", " + html);
 				
 				var polyline = new GPolyline(points, colour, width)				
 			
 				GEvent.addListener(polyline, 'click', function() {
 						//alert(html);
-						displayCustomMessage(html);					
+						displayCustomMessage(html, 1, id);					
 				});
 				
 				GEvent.addListener(polyline, 'mouseover', function() {
 						//alert(name);
-						displayCustomMessage(name);
+						displayCustomMessage(name, 2, 0);
 				});
 				
 				GEvent.addListener(polyline, 'mouseout', function() {
 						//alert(name);
-						displayCustomMessage('hide');
+						displayCustomMessage('', 0, 0);
 				});
 				return polyline;
 			}
@@ -155,37 +165,30 @@
 			$().mousemove(function(e){
 				 // e.pageX - gives you X position
 				 // e.pageY - gives you Y position
-				 $('#document').html('e.pageX = ' + e.pageX + ', e.pageY = ' + e.pageY);
 				 $('#top').val(e.pageY);
 				 $('#left').val(e.pageX);
 			});
-		
-			$('#click').click(function(e){
-				// e.pageX - gives you X position
-				// e.pageY - gives you Y position
-				$('#click').html('e.pageX = ' + e.pageX + ', e.pageY = ' + e.pageY);
-			});
 
-			function displayCustomMessage(html) {
-				/*
-				if (navigator.appName == "Microsoft Internet Explorer"){
-					mX = window.event.clientX;
-					mY = window.event.clientY;
-				}
-				else {
-					mX = window.event.pageX;
-					mY = window.event.pageY;
-				}
-				*/				
-				//window.alert($('#top').val());
+			function displayCustomMessage(content, type, id) {
 				
-				if (html != "hide") {
-					$('#ollietip').css('top', parseInt($('#top').val()) + 20);
-					$('#ollietip').css('left', parseInt($('#left').val()));
-					$('#ollietip').html(html);
-					$('#ollietip').show();
+				if (type != 0) {
+					$('#polydesc').css('top', parseInt($('#top').val()) + 20);
+					$('#polydesc').css('left', parseInt($('#left').val()));
+					
+					if (type == 1) {
+						$('#polydesc').addClass('form');
+						content += "<input type='hidden' id='mission_id' value='" + id + "' />" +
+												"<input type='hidden' id='agent_id' value='" + agentId + "' />" +
+												"<input type='button' class='join' value='Join this mission' onclick='saveData(2);' />";
+					} else {
+						$('#polydesc').addClass('tooltip');
+					}
+					$('#polydesc').html(content);
+					$('#polydesc').show();
 				} else {
-					$('#ollietip').hide();
+					$('#polydesc').hide();
+					$('#polydesc').removeClass('form');
+					$('#polydesc').removeClass('tooltip');
 				}
 					
 				//document.getElementById('ollietip').style.display = "block";
@@ -227,9 +230,9 @@
 						 "allowfullscreen='true' width='200' height='160'></embed></object>";
 					}
 					
-					var marker = createMarker(point, jsonData.markers[i].label, html, jsonData.markers[i].colour);
+					var marker = createMarker(jsonData.markers[i].agent_id, point, jsonData.markers[i].label, html, jsonData.markers[i].colour);
 					map.addOverlay(marker);
-					maptips.add_tooltip(marker, jsonData.markers[i].label); // MapTips aqui!
+					//maptips.add_tooltip(marker, jsonData.markers[i].label); // MapTips aqui!
 				}
  
 				// put the assembled agents_html contents into the agents div
@@ -252,39 +255,59 @@
 						}
 						
 						var html = '<div class="bubble"><h3>' + jsonData.lines[i].label + '</h3><p>' + jsonData.lines[i].html + '</p></div>';						
-						var polyline = createPolyline(points, jsonData.lines[i].colour, jsonData.lines[i].width, jsonData.lines[i].label, html);
+						var polyline = createPolyline(jsonData.lines[i].mission_id, points, jsonData.lines[i].colour, jsonData.lines[i].width, jsonData.lines[i].label, html);
 						map.addOverlay(polyline); 
 						//maptips.add_tooltip(polyline, jsonData.lines[i].label); // MapTips aqui!
 					}
 				}
 			}
 			
-			saveData = function() {
+			saveData = function(num) {
 	
-				var type = escape(document.getElementById("type").value);
-				var name = escape(document.getElementById("name").value);
-				var content = escape(document.getElementById("markcontent").value);
-				var colour = escape(document.getElementById("colour").value);
-				var location = escape(document.getElementById("location").value);
-				var latlng = marker.getLatLng();
-				var lat = latlng.lat();
-				var lng = latlng.lng();
-	
-				var url = "dbconnect.php?insert=true&name=" + name + "&content=" + content +
-									"&colour=" + colour + "&lat=" + lat + "&lng=" + lng + "&location=" + location +
-									"&type=" + type;
+				if (num == 1) {
+					var type = escape(document.getElementById("type").value);
+					var name = escape(document.getElementById("name").value);
+					var content = escape(document.getElementById("markcontent").value);
+					var location = escape(document.getElementById("location").value);
+					var latlng = marker.getLatLng();
+					var lat = latlng.lat();
+					var lng = latlng.lng();
+					
+					if (type == 0) {
+						var colour = "user";
+					} else {
+						var colour = escape(document.getElementById("colour").value);
+					}
+		
+					var url = "dbconnect.php?insert=agent&name=" + name + "&content=" + content +
+										"&colour=" + colour + "&lat=" + lat + "&lng=" + lng + "&location=" + location +
+										"&type=" + type;
+					var message = "Location added."
+				
+				} else {
+					
+					var mission_id = escape(document.getElementById("mission_id").value);
+					var agent_id = escape(document.getElementById("agent_id").value);
+					
+					var url = "dbconnect.php?insert=mission&mission=" + mission_id + "&agent=" + agent_id;
+					var message = "You are now connected <br />to this mission";
+				}
+				
 				GDownloadUrl(url, function(data, responseCode) {
 					if (responseCode == 200 && data.length <= 1) {
-						marker.closeInfoWindow();
 						
-						map.removeOverlay(marker);
-						document.getElementById("message").innerHTML = "Location added.";
-						
-						var point = new GLatLng(lat, lng);
-						var html = '<div class="bubble"><h3>' + unescape(name) + '</h3><p>' + unescape(content) + '</p></div>';
-						var new_marker = createMarker(point,name,html,colour);
-						map.addOverlay(new_marker); 
-						
+						document.getElementById("message").innerHTML = message;
+						if (num == 1) {
+							marker.closeInfoWindow();
+							map.removeOverlay(marker);						
+							
+							var point = new GLatLng(lat, lng);
+							var html = '<div class="bubble"><h3>' + unescape(name) + '</h3><p>' + unescape(content) + '</p></div>';
+							var new_marker = createMarker(0,point,name,html,colour);
+							map.addOverlay(new_marker); 
+						} else {
+							
+						}
 					}
 				});
 			}
