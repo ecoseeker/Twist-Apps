@@ -63,11 +63,9 @@
 					markerOptions = { icon:blueIcon, draggable:true };
 					marker = new GMarker(latlng, markerOptions);
 					
-					//alert(form_html);
-					
-					var html = "<div class='form'><input type='hidden' id='location' value='" + mapLocation + "' />" +
+					var html = "<div class='form'>" +
 					 "<label for='name'>Name:</label><input type='text' id='name' value='New Marker' />" +
-					 "<label for='type'>Content type:</label><select id='type'>";
+					 "<label for='marker_type'>Content type:</label><select id='marker_type'>";
 					 
 					if (agentId == 0) {
 					 	html += "<option value='0' selected>THIS IS ME!</option>";
@@ -113,10 +111,10 @@
 			var i = 0;
  
 			// A function to create the marker and set up the event window
-			createMarker = function(id,point,name,html,colour) {
+			createMarker = function(id,point,name,html,colour,type) {
 				var customIcon = new GIcon(baseIcon);
-				
-				if (id != agentId) {
+
+				if (agentId != id || agentId == 0) {
 					customIcon.image = "../images/map-marker-" + colour + ".png";
 				} else {
 					customIcon.image = "../images/map-marker-agent.png";
@@ -134,29 +132,24 @@
 				gmarkers[i] = marker;
 				htmls[i] = html;
 				// add a line to the agents html
-				//agents_html += '<li><a href="javascript:myclick(' + i + ')">' + name + '<\/a><\/li>';
 				agents_html += '<option value="' + i + '">' + name + '</option>';
 				i++;
 				return marker;
 			}
 			
 			function createPolyline(id,points,colour,width,name,html) {
-				//alert(points + ", " + name + ", " + html);
 				
 				var polyline = new GPolyline(points, colour, width)				
 			
 				GEvent.addListener(polyline, 'click', function() {
-						//alert(html);
 						displayCustomMessage(html, 1, id);					
 				});
 				
 				GEvent.addListener(polyline, 'mouseover', function() {
-						//alert(name);
 						displayCustomMessage(name, 2, 0);
 				});
 				
 				GEvent.addListener(polyline, 'mouseout', function() {
-						//alert(name);
 						displayCustomMessage('', 0, 0);
 				});
 				return polyline;
@@ -177,9 +170,11 @@
 					
 					if (type == 1) {
 						$('#polydesc').addClass('form');
-						content += "<input type='hidden' id='mission_id' value='" + id + "' />" +
-												"<input type='hidden' id='agent_id' value='" + agentId + "' />" +
-												"<input type='button' class='join' value='Join this mission' onclick='saveData(2);' />";
+						content += "<input type='hidden' id='missionId' value='" + id + "' />";
+						if (agentId != 0) {						
+							content += "<input type='button' class='join' value='Join this mission' onclick='saveData(2);' />";
+						}
+						
 					} else {
 						$('#polydesc').addClass('tooltip');
 					}
@@ -190,17 +185,12 @@
 					$('#polydesc').removeClass('form');
 					$('#polydesc').removeClass('tooltip');
 				}
-					
-				//document.getElementById('ollietip').style.display = "block";
 			}		
 
 			
 			// This function picks up the click and opens the corresponding info window
 			myclick = function(i) {
 				gmarkers[i].openInfoWindowHtml(htmls[i]);
-				/*
-				alert("Hello World");
-				*/
 			}
 			 
 			// ================================================================
@@ -230,7 +220,7 @@
 						 "allowfullscreen='true' width='200' height='160'></embed></object>";
 					}
 					
-					var marker = createMarker(jsonData.markers[i].agent_id, point, jsonData.markers[i].label, html, jsonData.markers[i].colour);
+					var marker = createMarker(jsonData.markers[i].agent_id, point, jsonData.markers[i].label, html, jsonData.markers[i].colour, 1);
 					map.addOverlay(marker);
 					//maptips.add_tooltip(marker, jsonData.markers[i].label); // MapTips aqui!
 				}
@@ -265,48 +255,58 @@
 			saveData = function(num) {
 	
 				if (num == 1) {
-					var type = escape(document.getElementById("type").value);
+					// Add marker/agent
+					var marker_type = parseInt(document.getElementById("marker_type").value);
 					var name = escape(document.getElementById("name").value);
 					var content = escape(document.getElementById("markcontent").value);
-					var location = escape(document.getElementById("location").value);
 					var latlng = marker.getLatLng();
 					var lat = latlng.lat();
 					var lng = latlng.lng();
-					
-					if (type == 0) {
-						var colour = "user";
-					} else {
-						var colour = escape(document.getElementById("colour").value);
-					}
+					var colour = escape(document.getElementById("colour").value);
 		
 					var url = "dbconnect.php?insert=agent&name=" + name + "&content=" + content +
-										"&colour=" + colour + "&lat=" + lat + "&lng=" + lng + "&location=" + location +
-										"&type=" + type;
+										"&colour=" + colour + "&lat=" + lat + "&lng=" + lng + "&location=" + mapLocation +
+										"&type=" + marker_type;
 					var message = "Location added."
 				
 				} else {
-					
-					var mission_id = escape(document.getElementById("mission_id").value);
-					var agent_id = escape(document.getElementById("agent_id").value);
-					
-					var url = "dbconnect.php?insert=mission&mission=" + mission_id + "&agent=" + agent_id;
+					// Add polyline/join mission
+					var missionId = parseInt(document.getElementById("missionId").value);
+						
+					var url = "dbconnect.php?insert=mission&mission=" + missionId + "&agent=" + agentId +
+										"&location=" + mapLocation;
+					alert(url);
 					var message = "You are now connected <br />to this mission";
 				}
 				
 				GDownloadUrl(url, function(data, responseCode) {
-					if (responseCode == 200 && data.length <= 1) {
+					if (responseCode == 200) {
 						
 						document.getElementById("message").innerHTML = message;
+						var point = new GLatLng(lat, lng);
+					
 						if (num == 1) {
+							// Add marker/agent
+							var xml = GXml.parse(data);
+							var markers = xml.documentElement.getElementsByTagName("marker");
+							for (var i = 0; i < markers.length; i++) {
+								agentId = parseInt(markers[i].getAttribute("id"));
+							}
+							
+							document.getElementById("login").innerHTML = "You are logged in as a guest";
 							marker.closeInfoWindow();
-							map.removeOverlay(marker);						
+							map.removeOverlay(marker);
 							
-							var point = new GLatLng(lat, lng);
-							var html = '<div class="bubble"><h3>' + unescape(name) + '</h3><p>' + unescape(content) + '</p></div>';
-							var new_marker = createMarker(0,point,name,html,colour);
+							name = unescape(name);
+							content = unescape(content)
+							var html = '<div class="bubble"><h3>' + name + '</h3><p>' + content + '</p></div>';
+							var new_marker = createMarker(agentId,point,name,html,colour, 2);
 							map.addOverlay(new_marker); 
+						
 						} else {
-							
+							// Add polyline/join mission
+							//polyline.insertVertex(0, point);
+							$('#polydesc').hide();
 						}
 					}
 				});
