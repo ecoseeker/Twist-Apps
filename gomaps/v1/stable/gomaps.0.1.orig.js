@@ -9,7 +9,7 @@
 		var marker;
 		//var gmarkers=[]; 
 		
-		var baseIcon = new GIcon(G_DEFAULT_ICON);
+		var baseIcon = new GIcon();
 		baseIcon.image = "../images/map-marker-orange.png";
 		baseIcon.iconSize = new GSize(34, 33);
 				
