@@ -10,14 +10,18 @@
 		//var gmarkers=[]; 
 		
 		var baseIcon = new GIcon();
-		baseIcon.image = "../images/map-marker-orange.png";
-		baseIcon.iconSize = new GSize(34, 33);
+		baseIcon.image = "../images/new-map-marker-orange.png";
+		baseIcon.shadow = "../images/new-map-marker-shadow.png";
+    baseIcon.iconSize = new GSize(29.0, 28.0);
+    baseIcon.shadowSize = new GSize(44.0, 28.0);
+    baseIcon.iconAnchor = new GPoint(14.0, 14.0);
+    baseIcon.infoWindowAnchor = new GPoint(14.0, 14.0);
 				
 		var blueIcon = new GIcon(baseIcon);
-		blueIcon.image = "../images/map-marker-blue.png";
+		blueIcon.image = "../images/new-map-marker-blue.png";
 				
 		var yellowIcon = new GIcon(baseIcon);
-		yellowIcon.image = "../images/map-marker-yellow.png";
+		yellowIcon.image = "../images/new-map-marker-yellow.png";
 
 		var mission_id = 0;
 		
@@ -115,9 +119,9 @@
 				var customIcon = new GIcon(baseIcon);
 
 				if (agentId != id || agentId == 0) {
-					customIcon.image = "../images/map-marker-" + colour + ".png";
+					customIcon.image = "../images/new-map-marker-" + colour + ".png";
 				} else {
-					customIcon.image = "../images/map-marker-agent.png";
+					customIcon.image = "../images/new-map-marker-agent.png";
 				}
 				markerOptions = { icon:customIcon,title:name };
 			
